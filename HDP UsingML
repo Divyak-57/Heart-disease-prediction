@@ -1,0 +1,111 @@
+# prompt: make a heart disease predictor with required parameters by taking user inputs and model selection is logistic regression, decision tree, random forest , KNN and also provide confusion matrix, accuracy graph,confidence score using heart.csv dataset make it error free
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+!wget https://raw.githubusercontent.com/datasciencedojo/datasets/master/heart.csv
+df = pd.read_csv('heart.csv')
+
+# Preprocessing
+df = df.replace('?', np.nan)  # Replace '?' with NaN
+df.dropna(inplace=True)  # Remove rows with missing values
+df['cp'] = df['cp'].astype('object')  # Convert cp to categorical
+df['thal'] = df['thal'].astype('object')  # Convert thal to categorical
+df = pd.get_dummies(df, drop_first=True)
+
+# Feature scaling
+X = df.drop('target', axis=1)
+y = df['target']
+X = StandardScaler().fit_transform(X)
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Function to train and evaluate the model
+def train_and_evaluate(model, X_train, X_test, y_train, y_test):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+    print(classification_report(y_test,y_pred))
+    print(f"Accuracy: {accuracy}")
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title("Confusion Matrix")
+    plt.show()
+    return accuracy, y_pred
+
+# Train and evaluate each model
+print("Logistic Regression:")
+accuracy_lr, y_pred_lr = train_and_evaluate(LogisticRegression(), X_train, X_test, y_train, y_test)
+
+print("\nDecision Tree:")
+accuracy_dt, y_pred_dt = train_and_evaluate(DecisionTreeClassifier(), X_train, X_test, y_train, y_test)
+
+print("\nRandom Forest:")
+accuracy_rf, y_pred_rf = train_and_evaluate(RandomForestClassifier(), X_train, X_test, y_train, y_test)
+
+print("\nKNN:")
+accuracy_knn, y_pred_knn = train_and_evaluate(KNeighborsClassifier(), X_train, X_test, y_train, y_test)
+
+# User input for prediction
+# Example usage:
+# age = 52
+# sex = 1
+# cp = 0
+# trestbps = 125
+# chol = 212
+# fbs = 0
+# restecg = 1
+# thalach = 168
+# exang = 0
+# oldpeak = 1.0
+# slope = 2
+# ca = 2
+# thal = 3
+
+# Input Parameters (replace with your user input method)
+user_input = pd.DataFrame({
+    'age':[20],
+    'sex':[1],
+    'cp':[0],
+    'trestbps':[125],
+    'chol':[200],
+    'fbs':[0],
+    'restecg':[1],
+    'thalach':[100],
+    'exang':[0],
+    'oldpeak':[1.0],
+    'slope':[2],
+    'ca':[2],
+    'thal':[3]
+})
+
+user_input = pd.get_dummies(user_input, drop_first=True)
+missing_cols = set( df.columns ) - set( user_input.columns )
+for c in missing_cols:
+    user_input[c] = 0
+user_input = user_input[df.columns[:-1]] #align order of columns
+user_input = StandardScaler().fit_transform(user_input)
+
+# Predict using the trained models
+prediction_lr = LogisticRegression().fit(X_train, y_train).predict(user_input)[0]
+print(f'\nLogistic Regression Prediction: {prediction_lr}')
+prediction_dt = DecisionTreeClassifier().fit(X_train,y_train).predict(user_input)[0]
+print(f'Decision Tree Prediction: {prediction_dt}')
+prediction_rf = RandomForestClassifier().fit(X_train,y_train).predict(user_input)[0]
+print(f'Random Forest Prediction: {prediction_rf}')
+prediction_knn = KNeighborsClassifier().fit(X_train,y_train).predict(user_input)[0]
+print(f'KNN Prediction: {prediction_knn}')
